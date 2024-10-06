@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bierner.color-info",
+    "jpoissonnier.vscode-styled-components",
+    "christian-kohler.npm-intellisense",
+    "shardulm94.trailing-spaces",
+    "davidanson.vscode-markdownlint",
+    "IBM.output-colorizer",
+  ]
+}
