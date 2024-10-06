@@ -18,11 +18,11 @@ services:
       dockerfile: .docker/Dockerfile.backend
     container_name: backend_app
     hostname: backend_app
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python portfolio/manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     volumes:
-      - ../backend/portfolio:/srv/app
+      - ../backend:/srv/app
     env_file:
       - .env
     depends_on:
