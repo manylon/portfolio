@@ -1,0 +1,45 @@
+name: portfolio
+
+services:
+  db:
+    image: postgres:16
+    container_name: portfolio_db
+    hostname: portfolio_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  backend:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.backend
+    container_name: backend_app
+    hostname: backend_app
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend/portfolio:/srv/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.frontend
+    container_name: frontend_app
+    hostname: frontend_app
+    command: sh -c "yarn dev & yarn storybook --no-open" 
+    ports:
+      - "5173:5173"
+      - "6006:6006"
+    volumes:
+      - ../frontend:/srv/app
+      - /srv/app/node_modules
+    env_file:
+      - .env
