@@ -32,6 +32,27 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(':')
 # Application definition
 
 INSTALLED_APPS = [
+    # apps
+    'core',
+    'blog',
+
+    # wagtail
+    'wagtail.contrib.forms',
+    'wagtail.contrib.redirects',
+    'wagtail.embeds',
+    'wagtail.sites',
+    'wagtail.users',
+    'wagtail.snippets',
+    'wagtail.documents',
+    'wagtail.images',
+    'wagtail.search',
+    'wagtail.admin',
+    'wagtail',
+
+    'modelcluster',
+    'taggit',
+
+    # django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,16 +62,14 @@ INSTALLED_APPS = [
 
     # serving frontend separately
     'corsheaders',
-
     # django rest-framework
     'rest_framework',
-
-    # apps
-    'core',
-    'blog',
 ]
 
 MIDDLEWARE = [
+    # for frontend
+    'corsheaders.middleware.CorsMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,8 +78,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    # for frontend
-    'corsheaders.middleware.CorsMiddleware'
+    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'portfolio.urls'
@@ -171,3 +189,8 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL')
+WAGTAIL_SITE_NAME = os.environ.get('WAGTAIL_SITE_NAME')
+WAGTAILDOCS_EXTENSIONS = os.environ.get('WAGTAILDOCS_EXTENSIONS', '').split(':')  # TODO: make exceptions for the extensions
+WAGTAILDOCS_SERVE_METHOD = os.environ.get('WAGTAILDOCS_SERVE_METHOD')
