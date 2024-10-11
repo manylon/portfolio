@@ -8,5 +8,6 @@
     "shardulm94.trailing-spaces",
     "davidanson.vscode-markdownlint",
     "IBM.output-colorizer",
+    "bradlc.vscode-tailwindcss",
   ]
 }
