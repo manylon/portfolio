@@ -1,5 +1,8 @@
 # python cache
 **/__pycache__/
+
+/staticfiles/
+/media/
 # Docker environments
 .docker/.env
 
