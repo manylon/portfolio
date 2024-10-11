@@ -1,0 +1,30 @@
+/* Button.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.btn {
+  @apply px-4 py-2 rounded-full font-semibold focus:outline-none relative overflow-hidden;
+  position: relative;
+}
+
+.btn-primary {
+  @apply bg-Pantone7604C text-white hover:bg-Pantone7Black0961C border-2 border-Pantone7Black0961C;
+}
+
+.btn:hover {
+  @apply bg-transparent transform translate-x-[var(--x)] translate-y-[var(--y)];
+}
+
+/* Button sizes */
+.btn-small {
+  @apply px-3 py-1 text-sm;
+}
+
+.btn-medium {
+  @apply px-6 py-3 text-base;
+}
+
+.btn-large {
+  @apply px-8 py-4 text-lg;
+}
