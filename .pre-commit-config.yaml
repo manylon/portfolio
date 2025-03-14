@@ -1,8 +1,16 @@
 repos:
   # Fix end of files
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v5.0.0
     hooks:
+      - id: check-ast
+        files: '.*\.py$'
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: debug-statements
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -11,7 +19,7 @@ repos:
 
   # Remove unused imports/variables
   - repo: https://github.com/myint/autoflake
-    rev: v1.4
+    rev: v2.3.1
     hooks:
       - id: autoflake
         args:
@@ -29,13 +37,13 @@ repos:
 
   # Black formatting
   - repo: https://github.com/psf/black
-    rev: "22.3.0"
+    rev: "25.1.0"
     hooks:
       - id: black
 
   # Lint files
   - repo: https://github.com/pycqa/flake8
-    rev: "3.9.0"
+    rev: "7.0.0"
     hooks:
       - id: flake8
         args:
