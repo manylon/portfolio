@@ -1,21 +1,55 @@
-FROM python:3.11
+##########################
+#         BASE           #
+##########################
+
+FROM python:3.11 AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
+
+# Install the required packages
+RUN apt-get clean && \
+    apt-get update && \
+    apt-get install -y binutils libproj-dev gdal-bin exiftool && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /srv/app
 
-# Copy the requirements file into the container
-COPY ../backend/requirements_dev.txt /srv/app
-
 # Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip && \
-    pip install -r requirements_dev.txt
+RUN pip install --upgrade pip
 
 # Copy the current directory contents into the container at /app/
 COPY ../backend /srv/app
 
+# Copy the wait_for_postgres and wait_for_django scripts into the container
+COPY .docker/wait_for_postgres.py /tmp
+
+# Copy the entrypoint scripts into the container
+COPY .docker/entrypoint.backend.sh /tmp
+COPY .docker/entrypoint.sh /tmp
+
+# Add execute permissions to the scripts
+RUN chmod +x /tmp/entrypoint.backend.sh
+RUN chmod +x /tmp/entrypoint.sh
+
 # Expose the port the app runs on
 EXPOSE 8000
+
+##########################
+#      DEVELOPMENT       #
+##########################
+FROM base AS development
+
+COPY ../backend/requirements_dev.txt /srv/app
+COPY ../backend/requirements.txt /srv/app
+
+RUN pip install -r requirements_dev.txt
+
+# Run the entrypoint script
+ENTRYPOINT ["/tmp/entrypoint.sh"]
+

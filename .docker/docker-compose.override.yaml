@@ -1,0 +1,36 @@
+
+services:
+  main:
+    image: python:3.11
+    container_name: main
+    hostname: main
+    tty: true
+    restart: on-failure
+    volumes:
+      - ../:/srv/app
+
+  app-backend:
+    build:
+      target: development
+    command: python portfolio/manage.py runserver 0.0.0.0:8000
+    ports:
+      - ${DJANGO_PORT}:8000
+
+  app-frontend:
+      build:
+        context: ..
+        dockerfile: .docker/Dockerfile.frontend
+        target: development
+      container_name: app-frontend
+      hostname: app-frontend
+      restart: unless-stopped
+      command: sh -c "yarn dev & yarn storybook --no-open"
+      ports:
+        - "5173:5173"
+        - "6006:6006"
+      volumes:
+        - ../frontend:/srv/app
+        - /srv/app/node_modules
+      environment:
+        NODE_ENV: ${NODE_ENV}
+        REACT_APP_API_URL: ${REACT_APP_API_URL}

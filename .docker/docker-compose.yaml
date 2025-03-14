@@ -1,45 +1,75 @@
 name: portfolio
 
+x-common-env-postgres: &env-postgres
+  POSTGRES_DB: ${POSTGRES_DB_INIT}
+  POSTGRES_DB_BACKEND: ${POSTGRES_DB_BACKEND}
+  POSTGRES_DB_GEOSERVER: ${POSTGRES_DB_GEOSERVER}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT}
+  POSTGRES_SSLMODE: ${POSTGRES_SSLMODE}
+
+x-common-env-app-backend: &env-app-backend
+  DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+  SECRET_KEY: ${SECRET_KEY}
+  DEBUG: ${DEBUG}
+  BASE_URL: ${BASE_URL}
+  API_PATH: ${API_PATH}
+  DJANGO_ADMIN_ENABLED: ${DJANGO_ADMIN_ENABLED}
+  DJANGO_ADMIN_PATH: ${DJANGO_ADMIN_PATH}
+  WAGTAIL_ADMIN_PATH: ${WAGTAIL_ADMIN_PATH}
+  WAGTAIL_SITE_NAME: ${WAGTAIL_SITE_NAME}
+  WAGTAILADMIN_BASE_URL: ${WAGTAILADMIN_BASE_URL}
+  WAGTAILDOCS_EXTENSIONS: ${WAGTAILDOCS_EXTENSIONS}
+  WAGTAILIMAGES_EXTENSIONS: ${WAGTAILIMAGES_EXTENSIONS}
+  WAGTAILDOCS_SERVE_METHOD: ${WAGTAILDOCS_SERVE_METHOD}
+  DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+  DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+  DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+  DJANGO_FLUSH_DB: ${DJANGO_FLUSH_DB}
 services:
   db:
-    image: postgres:16
-    container_name: portfolio_db
-    hostname: portfolio_db
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.postgresql
+    container_name: db
+    hostname: db
+    restart: on-failure
     ports:
       - "5432:5432"
     volumes:
       - ../postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env
+    environment:
+      <<: *env-postgres
+      TEST_DATA: ${TEST_DATA}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
-  backend:
+  app-backend:
     build:
       context: ..
       dockerfile: .docker/Dockerfile.backend
-    container_name: backend_app
-    hostname: backend_app
-    command: python portfolio/manage.py runserver 0.0.0.0:8000
-    ports:
-      - "8000:8000"
+    container_name: app-backend
+    image: app-backend-image
+    hostname: app-backend
+    restart: on-failure
     volumes:
       - ../backend:/srv/app
-    env_file:
-      - .env
     depends_on:
       - db
+    environment:
+      <<: [*env-postgres, *env-app-backend]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
-  frontend:
-    build:
-      context: ..
-      dockerfile: .docker/Dockerfile.frontend
-    container_name: frontend_app
-    hostname: frontend_app
-    command: sh -c "yarn dev & yarn storybook --no-open" 
-    ports:
-      - "5173:5173"
-      - "6006:6006"
-    volumes:
-      - ../frontend:/srv/app
-      - /srv/app/node_modules
-    env_file:
-      - .env
+

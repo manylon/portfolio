@@ -1,0 +1,23 @@
+FROM postgres:16
+
+# Install necessary packages and PostGIS extension
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-16-postgis-3 \
+        postgresql-16-postgis-3-scripts \
+        postgresql-16-pgaudit \
+        postgresql-16-pgrouting \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy test_data_database
+COPY .docker/test_data_database /tmp/test_data_database
+
+# Ensure all files in the directory are readable and executable
+RUN chmod -R a+rx /tmp/test_data_database
+
+# Copy initialise_postgresql files
+COPY .docker/initialize_postgresql /tmp/initialize_postgresql
+
+# Copy in the initialise_postgresql.sh script
+COPY .docker/initialize_postgresql.sh /docker-entrypoint-initdb.d/
