@@ -37,9 +37,6 @@ COPY .docker/entrypoint.sh /tmp
 RUN chmod +x /tmp/entrypoint.backend.sh
 RUN chmod +x /tmp/entrypoint.sh
 
-# Expose the port the app runs on
-EXPOSE 8000
-
 ##########################
 #      DEVELOPMENT       #
 ##########################
@@ -49,6 +46,9 @@ COPY ../backend/requirements_dev.txt /srv/app
 COPY ../backend/requirements.txt /srv/app
 
 RUN pip install -r requirements_dev.txt
+
+EXPOSE 8000
+EXPOSE 5678
 
 # Run the entrypoint script
 ENTRYPOINT ["/tmp/entrypoint.sh"]
