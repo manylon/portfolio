@@ -1,0 +1,169 @@
+upstream app-backend {
+    keepalive 8;
+    server app-backend:8000 fail_timeout=0;
+}
+
+# Disable direct access to a web site by ip address
+server {
+  listen 80 default_server;
+  listen [::]:80 default_server;
+  listen 443 default_server;
+  listen [::]:443 default_server;
+
+  ssl_reject_handshake on;
+
+  server_name "";
+  return 444;
+}
+
+log_format json-logger '{ "time": "$time_iso8601", '
+                       '"remote_addr": "$remote_addr", '
+                       '"request": "$request", '
+                       '"status": "$status", '
+                       '"resp_time": $request_time, '
+                       '"request_length": $request_length, '
+                       '"resp_body_size": $body_bytes_sent, '
+                       '"uri": "$request_uri", '
+                       '"body_bytes_sent": "$body_bytes_sent", '
+                       '"http_referer": "$http_referer", '
+                       '"http_user_agent": "$http_user_agent", '
+                       '"upstream_addr": "$upstream_addr", '
+                       '"upstream_connect_time": "$upstream_connect_time", '
+                       '"upstream_header_time": "$upstream_header_time", '
+                       '"upstream_response_time": "$upstream_response_time", '
+                       '"request_id": "$request_id", '
+                       '"source": "nginx", '
+                       '"request_time": "$request_time" }';
+                       
+server {
+    listen 80;
+    server_name ${PORTFOLIO_HOST};
+    server_tokens off;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name ${PORTFOLIO_HOST};
+    server_tokens off;
+
+    ssl_certificate ${PORTFOLIO_TLS_CERT}; 
+    ssl_certificate_key ${PORTFOLIO_TLS_KEY};
+
+    access_log /var/log/nginx/access.log json-logger;
+    error_log /var/log/nginx/error.log ${NGINX_ERROR_LOG_LEVEL};
+
+    client_max_body_size 20M;
+
+    # Frontend (React) - For testing purposes with Strict CSP
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+
+            add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; connect-src 'self' https://${PORTFOLIO_HOST}; " always;
+            add_header Permissions-Policy "fullscreen=(self)";
+            add_header Referrer-Policy "strict-origin" always;
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1";
+
+            autoindex off;
+        }
+
+    # Django API
+    location /api {
+        try_files $uri @proxy_api;
+    }
+
+    # Reverse Proxy for Django API
+    location @proxy_api {
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Url-Scheme $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass   http://app-backend;
+
+        # Hide Django headers
+        proxy_hide_header Content-Security-Policy;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header Referrer-Policy;
+        proxy_hide_header Cross-Origin-Opener-Policy;
+        proxy_hide_header Cache-Control;
+        proxy_hide_header Content-Type;
+        proxy_hide_header Strict-Transport-Security;
+
+        # Apply Security Headers
+        add_header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; " always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "same-origin" always;
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+        add_header Cache-Control "no-store" always;
+        add_header Content-Type: "application/json" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    }
+
+    # Django Admin
+    location /${WAGTAIL_ADMIN_PATH} {
+        try_files $uri @proxy_admin;
+    }
+
+    # Reverse Proxy for Django Admin
+    location @proxy_admin {
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Url-Scheme $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass   http://app-backend;
+
+        # Hide Django headers
+        proxy_hide_header Content-Security-Policy;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header Referrer-Policy;
+        proxy_hide_header Cross-Origin-Opener-Policy;
+
+        # Apply Security Headers
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "same-origin" always;
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+    }
+
+    # Django static files
+    location /static {
+        alias /var/www/app/static/;  # Matches STATIC_ROOT variable in Django settings
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public, s-maxage=1, max-age=0, must-revalidate" always;
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "no-referrer" always;
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+        autoindex off;
+    }
+
+    # Django media files
+    location /media {
+        alias /var/www/app/media/;  # Matches MEDIA_ROOT variable in Django settings
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public, s-maxage=1, max-age=0, must-revalidate" always;
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "no-referrer" always;
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+        autoindex off;
+    }
+}

@@ -1,5 +1,6 @@
 # python cache
 **/__pycache__/
+**/.pytest_cache/
 
 /staticfiles/
 /media/
@@ -14,19 +15,37 @@
 **/.DS_Store
 
 # Ignore temp files
-temp.txt
+temp*.txt
 temp/
 
+# Backend
+backend/static/
+backend/media/
 
 # Frontend
 frontend/node_modules/
+frontend/.storybook
 
-frontend/dist
+frontend/storybook-static/*
+
+frontend/dist/*
 frontend/dist-ssr
 frontend/*.local
 
 # Database
 postgres_data/
+
+# Geoserver
+geoserver_data/
+
+# RabbitMQ
+rabbitmq_data/
+
+# Nginx
+.docker/nginx/certs/*
+.docker/nginx/certbot/conf/*
+.docker/nginx/certbot/www/*
+.docker/nginx/production/default.conf.template
 
 # Logs
 logs

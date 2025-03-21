@@ -14,7 +14,8 @@ services:
       target: development
     command: python portfolio/manage.py runserver 0.0.0.0:8000
     ports:
-      - ${DJANGO_PORT}:8000
+      - ${DJANGO_DEV_PORT}:8000
+      - ${DEBUG_DEBUGPY_APP_PORT:-5678}:5678
 
   app-frontend:
       build:
@@ -33,4 +34,49 @@ services:
         - /srv/app/node_modules
       environment:
         NODE_ENV: ${NODE_ENV}
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
+      REACT_APP_BASE_URL: ${BASE_URL}
+      REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+
+  nginx:
+    image: nginx:stable
+    container_name: app-nginx
+    hostname: app-nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs/:ro
+      - ./nginx/development:/etc/nginx/templates/:ro
+      - ../backend/static:/var/www/app/static
+      - ../backend/media:/var/www/app/media
+      - ../frontend/dist://usr/share/nginx/html
+      - ../frontend/storybook-static://usr/share/nginx/storybook
+      - ../backend/csp_hashes.txt:/etc/nginx/csp_hashes.txt:ro
+    ports:
+      - ${WEB_HTTP_PORT}:80
+      - ${WEB_HTTPS_PORT}:443
+    environment:
+      PORTFOLIO_HOST: ${PORTFOLIO_HOST}
+      PORTFOLIO_TLS_CERT: ${PORTFOLIO_TLS_CERT}
+      PORTFOLIO_TLS_KEY: ${PORTFOLIO_TLS_KEY}
+      PORTFOLIO_TLS_DHPARAMS: ${PORTFOLIO_TLS_DHPARAMS}
+      WAGTAIL_ADMIN_PATH: ${WAGTAIL_ADMIN_PATH}
+      WEB_HTTP_PORT: ${WEB_HTTP_PORT}
+      WEB_HTTPS_PORT: ${WEB_HTTPS_PORT}
+      NGINX_ERROR_LOG_LEVEL: ${NGINX_ERROR_LOG_LEVEL:-error}
+    depends_on:
+      - app-backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+
+  mkcert:
+    container_name: mkcert
+    hostname: mkcert
+    image: vishnunair/docker-mkcert
+    environment:
+      domain: ${PORTFOLIO_HOST}
+    volumes:
+      - ./nginx/certs:/root/.local/share/mkcert/
+    command: /bin/sh -c 'mkcert -install && for i in $$(echo $$domain | sed "s/,/ /g"); do [ ! -f /root/.local/share/mkcert/$$i.pem ] && mkcert $$i; done && tail -f -n0 /etc/hosts'
