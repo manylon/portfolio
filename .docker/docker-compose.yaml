@@ -37,7 +37,7 @@ services:
       dockerfile: .docker/Dockerfile.postgresql
     container_name: db
     hostname: db
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "5432:5432"
     volumes:
@@ -59,7 +59,7 @@ services:
     container_name: app-backend
     image: app-backend-image
     hostname: app-backend
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - ../backend:/srv/app
     depends_on:
