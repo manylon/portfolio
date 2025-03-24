@@ -10,11 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+from corsheaders.defaults import default_headers
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
+BASE_URL = os.environ.get("BASE_URL")
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,97 +29,149 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", default=0))
+if DEBUG:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+    CSRF_TRUSTED_ORIGINS = ['http://localhost', 'https://localhost']
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_METHODS = ("GET", "POST")
+else:
+    ALLOWED_HOSTS = [
+        host for host in os.getenv("DJANGO_ALLOWED_HOSTS").split(":") if host
+    ]
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(':')
+    CORS_ALLOWED_ORIGINS = [
+        domain for domain in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if domain
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        origin for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin
+    ]
 
+    CORS_ALLOW_METHODS = ("GET", "POST")
+    CORS_ALLOW_HEADERS = [
+        *default_headers,
+    ]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_AGE = 60 * 1
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+
+CORS_ALLOW_CREDENTIALS = True
+
+API_PATH = os.getenv("API_PATH", "").strip().strip("\\")
+DJANGO_ADMIN_ENABLED = int(os.environ.get("DJANGO_ADMIN_ENABLED"))
+if DJANGO_ADMIN_ENABLED:
+    DJANGO_ADMIN_PATH = os.getenv("DJANGO_ADMIN_PATH").strip("\\")
 
 # Application definition
 
 INSTALLED_APPS = [
-    # apps
-    'core',
-    'blog',
-
     # wagtail
-    'wagtail.contrib.forms',
-    'wagtail.contrib.redirects',
-    'wagtail.embeds',
-    'wagtail.sites',
-    'wagtail.users',
-    'wagtail.snippets',
-    'wagtail.documents',
-    'wagtail.images',
-    'wagtail.search',
-    'wagtail.admin',
-    'wagtail',
-
-    'modelcluster',
-    'taggit',
-
+    "wagtail",
+    "wagtail.admin",
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.contrib.settings",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail_headless_preview",
+    "modelcluster",
+    "taggit",
     # django
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    # serving frontend separately
-    'corsheaders',
-    # django rest-framework
-    'rest_framework',
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # REST API
+    "corsheaders",
+    "rest_framework",
 ]
+LOCAL_APPS = [
+    "core",
+    "blog",
+]
+
+INSTALLED_APPS += LOCAL_APPS
+
+if DJANGO_ADMIN_ENABLED:
+    INSTALLED_APPS += ("django.contrib.admin",)
 
 MIDDLEWARE = [
-    # for frontend
-    'corsheaders.middleware.CorsMiddleware',
-
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
-ROOT_URLCONF = 'portfolio.urls'
+ROOT_URLCONF = "portfolio.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(PROJECT_DIR, "templates"),
+        ],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'portfolio.wsgi.application'
+WSGI_APPLICATION = "portfolio.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('POSTGRES_HOST'),
-        'PORT': os.environ.get('POSTGRES_PORT', default='5432'),
-        "OPTIONS": {"sslmode": os.environ.get("POSTGRES_SSLMODE")}
-    }
-}
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB_BACKEND"),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": os.environ.get("POSTGRES_HOST"),
+        "PORT": os.environ.get("POSTGRES_PORT", default="5432"),
+        "CONN_MAX_AGE": 60 * 5,
+        "OPTIONS": {
+            "sslmode": os.environ.get("POSTGRES_SSLMODE"),
+            "connect_timeout": 5,
+        },
+    },
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_METADATA_CLASS": "rest_framework.metadata.SimpleMetadata",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 5,
+    "MAX_PAGE_SIZE": 20,
+
+if not DEBUG:
+    REST_FRAMEWORK.update({
+        "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+        "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    })
 
 
 # Password validation
@@ -123,16 +179,19 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        'OPTIONS': {
+            'min_length': 10,
+        }
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -140,57 +199,71 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = "en"
 
-TIME_ZONE = 'Europe/Sofia'
+TIME_ZONE = "Europe/Sofia"
 
 USE_I18N = False
 
 USE_TZ = True
 
-LANGUAGES = [
-    ("en", "English"),
-    ("bg", "Buglarian"),
-]
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication"
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
-    ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 5,
-    "MAX_PAGE_SIZE": 20,
-}
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React development server
-    "https://your-react-app-domain.com",  # Production build
-]
+LANGUAGES = WAGTAILADMIN_PERMITTED_LANGUAGES = [("en", "English")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static"
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
-# Media files (User-uploaded content)
-MEDIA_ROOT = BASE_DIR / "media"
+STATICFILES_DIRS = [
+    os.path.join(PROJECT_DIR, "static"),
+]
+
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = "/static/"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL')
-WAGTAIL_SITE_NAME = os.environ.get('WAGTAIL_SITE_NAME')
-WAGTAILDOCS_EXTENSIONS = os.environ.get('WAGTAILDOCS_EXTENSIONS', '').split(':')  # TODO: make exceptions for the extensions
-WAGTAILDOCS_SERVE_METHOD = os.environ.get('WAGTAILDOCS_SERVE_METHOD')
+
+
+# Wagtail settings
+WAGTAIL_ADMIN_PATH = os.environ.get("WAGTAIL_ADMIN_PATH")
+WAGTAILADMIN_BASE_URL = os.environ.get("WAGTAILADMIN_BASE_URL")
+WAGTAIL_SITE_NAME = os.environ.get("WAGTAIL_SITE_NAME")
+WAGTAILDOCS_EXTENSIONS = os.environ.get("WAGTAILDOCS_EXTENSIONS", "").split(":")
+WAGTAILDOCS_SERVE_METHOD = os.environ.get("WAGTAILDOCS_SERVE_METHOD")
+WAGTAIL_USER_TIME_ZONES = [
+    "Europe/Sofia",
+]
+WAGTAILADMIN_NOTIFICATION_FROM_EMAIL = os.environ.get(
+    "WAGTAILADMIN_NOTIFICATION_FROM_EMAIL"
+)
+WAGTAILADMIN_NOTIFICATION_USE_HTML = True
+WAGTAIL_ENABLE_UPDATE_CHECK = False
+WAGTAIL_ENABLE_WHATS_NEW_BANNER = False
+WAGTAIL_ALLOW_UNICODE_SLUGS = False
+WAGTAILIMAGES_EXTENSIONS = os.environ.get("WAGTAILIMAGES_EXTENSIONS", "").split(":")
+
+WAGTAILSEARCH_BACKENDS = {
+    "default": {
+        "BACKEND": "wagtail.search.backends.database",
+    }
+}
+
+
+WAGTAIL_HEADLESS_PREVIEW = {
+    "CLIENT_URLS": {
+        "default": BASE_URL + "/preview/",
+    },
+    "SERVE_BASE_URL": BASE_URL + "/preview/",
+    "REDIRECT_ON_PREVIEW": True,
+    "ENFORCE_TRAILING_SLASH": True,
+}
