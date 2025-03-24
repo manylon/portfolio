@@ -1,6 +1,12 @@
 import subprocess
+
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from modelcluster.models import ClusterableModel
+from wagtail.admin.panels import FieldPanel, PublishingPanel
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
+from wagtail.models import DraftStateMixin, RevisionMixin
+from wagtail.search import index
 
 class CustomImage(AbstractImage):
     alt = models.CharField(
@@ -52,8 +58,70 @@ class CustomRendition(AbstractRendition):
     def __str__(self):
         return self.title
 
-class ContactMessage(models.Model):
-    name = models.CharField(max_length=100)
+
+class Person(DraftStateMixin, RevisionMixin, index.Indexed, ClusterableModel):
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    nickname = models.CharField(blank=True, max_length=255)
+    email = models.EmailField(null=True, blank=True)
+    website = models.URLField(null=True, blank=True)
+    bio = models.TextField(blank=True)
+    revisions = GenericRelation("wagtailcore.Revision", related_query_name="author")
+
+    panels = [
+        FieldPanel("first_name"),
+        FieldPanel("last_name"),
+        FieldPanel("nickname"),
+        FieldPanel("email"),
+        FieldPanel("bio"),
+        PublishingPanel(),
+    ]
+
+    search_fields = [
+        index.FilterField("full_name"),
+        index.SearchField("full_name"),
+        index.AutocompleteField("full_name"),
+    ]
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def __str__(self):
+        return self.full_name
+
+    class Meta:
+        verbose_name_plural = "People"
+        verbose_name = "Person"
+        unique_together = ("first_name", "last_name")
+
+
+class Organization(DraftStateMixin, RevisionMixin, index.Indexed, ClusterableModel):
+    name = models.CharField(max_length=255, unique=True)
+    website = models.URLField(null=True, blank=True, unique=True)
+    revisions = GenericRelation(
+        "wagtailcore.Revision", related_query_name="oranization"
+    )
+
+    panels = [
+        FieldPanel("name"),
+        FieldPanel("website"),
+        PublishingPanel(),
+    ]
+
+    search_fields = [
+        index.FilterField("name"),
+        index.SearchField("name"),
+        index.AutocompleteField("name"),
+    ]
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Organizations"
+        verbose_name = "Organization"
+
     email = models.EmailField()
     subject = models.CharField(max_length=200)
     message = models.TextField()
