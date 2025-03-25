@@ -1,3 +1,4 @@
+from django.utils.crypto import constant_time_compare
 from rest_framework import serializers
 
 
@@ -29,3 +30,23 @@ class CarouselBlockSerializer(serializers.Serializer):
                 }
             )
         return images
+
+class PasswordRestrictionSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        self.restriction = kwargs.pop("restriction", None)
+        super().__init__(*args, **kwargs)
+
+    def validate_password(self, value):
+        if not self.restriction:
+            raise serializers.ValidationError("No restriction instance provided.")
+        if not constant_time_compare(value, self.restriction.password):
+            raise serializers.ValidationError(
+                "The password you have entered is not correct."
+            )
+        return value
+
+
+class PasswordFormSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
