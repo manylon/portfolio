@@ -30,6 +30,9 @@ x-common-env-app-backend: &env-app-backend
   DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
   DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
   DJANGO_FLUSH_DB: ${DJANGO_FLUSH_DB}
+  GEOSERVER_WMS_URL: ${GEOSERVER_WMS_URL}
+  GEOSERVER_URL: ${GEOSERVER_URL}
+
 services:
   db:
     build:
@@ -74,3 +77,33 @@ services:
         tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
 
+  geoserver:
+    build:
+        context: ..
+        dockerfile: .docker/Dockerfile.geoserver
+    container_name: geoserver
+    hostname: geoserver
+    command: /opt/startup.sh
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../geoserver_data:/opt/geoserver_data
+    depends_on:
+      - db
+    environment:
+      <<: *env-postgres
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD}
+      WEBAPP_CONTEXT: ${WEBAPP_CONTEXT}
+      SKIP_DEMO_DATA: ${SKIP_DEMO_DATA}
+      ROOT_WEBAPP_REDIRECT: ${ROOT_WEBAPP_REDIRECT}
+      INSTALL_EXTENSIONS: ${INSTALL_EXTENSIONS}
+      POSTGRES_JNDI_ENABLED: ${POSTGRES_JNDI_ENABLED}
+      CORS_ENABLED: ${CORS_ENABLED}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"

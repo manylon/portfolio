@@ -1,0 +1,12 @@
+# Start from the specified GeoServer base image
+FROM docker.osgeo.org/geoserver:2.26.0
+
+# Copy the wait_for_postgres script and entrypoint script into the container
+COPY .docker/wait_for_postgres.py /tmp
+COPY .docker/entrypoint.geoserver.sh /tmp
+
+# Add execute permissions to the entrypoint script
+RUN chmod +x /tmp/entrypoint.geoserver.sh
+
+# Set entrypoint to run the entrypoint script
+ENTRYPOINT ["/tmp/entrypoint.geoserver.sh"]
