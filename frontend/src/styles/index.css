@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-grey-50: #f5f5f5;
+  --color-grey-100: #eaeaea;
+  --color-grey-200: #7a7a7a;
+  --color-grey-300: #6c6c6c;
+  --color-grey-400: #5e5e5e;
+  --color-grey-500: #4c4c4c;
+  --color-grey-600: #2c2c2c;
+  --color-grey-700: #1c1c1c;
+  --color-grey-800: #121212;
+  --color-beige-25: #f9f6f2;
+  --color-beige-50: #e9e4de;
+  --color-beige-75: #f4f2f0;
+  --color-beige-100: #d4c9c0;
+  --color-beige-300: #a69391;
+  --color-beige-500: #554543;
+  --font-open-sans: "Open Sans", serif;
+  --font-source-sans-3: "Source Sans 3", serif;
+}
+
+@layer base {
+  p {
+    @apply text-sm/[1.5] font-source-sans-3 mb-1.5;
+  }
+}
