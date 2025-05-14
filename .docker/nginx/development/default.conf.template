@@ -167,3 +167,45 @@ server {
         autoindex off;
     }
 }
+
+
+server {
+    listen 80;
+    server_name design.${PORTFOLIO_HOST};
+    server_tokens off;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name design.${PORTFOLIO_HOST};
+    server_tokens off;
+
+    ssl_certificate ${PORTFOLIO_TLS_CERT}; 
+    ssl_certificate_key ${PORTFOLIO_TLS_KEY};
+
+    access_log /var/log/nginx/access.log json-logger;
+    error_log /var/log/nginx/error.log ${NGINX_ERROR_LOG_LEVEL};
+
+    client_max_body_size 20M;
+
+    # Frontend Catalog (Storybook) - For testing purposes with Strict CSP
+        location / {
+            root   /usr/share/nginx/storybook;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+
+            add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'self'; connect-src 'self' https://${PORTFOLIO_HOST}; " always;
+            add_header Permissions-Policy "fullscreen=(self)";
+            add_header Referrer-Policy "strict-origin" always;
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1";
+
+            autoindex off;
+        }
+}
