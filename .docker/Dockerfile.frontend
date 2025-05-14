@@ -23,7 +23,11 @@ FROM base AS development
 
 EXPOSE 5173 6006
 
-CMD ["yarn", "start"]
+COPY .docker/build_frontend.sh /tmp/build_frontend.sh
+RUN chmod +x /tmp/build_frontend.sh
+
+# Run the build script before starting the development server
+CMD ["/bin/sh", "-c", "/tmp/build_frontend.sh && yarn start"]
 
 ##########################
 #      PRODUCTION        #

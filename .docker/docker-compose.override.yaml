@@ -36,6 +36,8 @@ services:
       NODE_ENV: ${NODE_ENV}
       REACT_APP_BASE_URL: ${BASE_URL}
       REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+      BUILD_REACT_APP: ${BUILD_REACT_APP}
+      BUILD_STORYBOOK: ${BUILD_STORYBOOK}
 
   nginx:
     image: nginx:stable
