@@ -31,7 +31,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = int(os.environ.get("DEBUG", default=0))
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
-    CSRF_TRUSTED_ORIGINS = ['http://localhost', 'https://localhost']
+    CSRF_TRUSTED_ORIGINS = ['http://localhost', 'https://localhost', "http://localhost:5173", "https://localhost:5173"]
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOW_METHODS = ("GET", "POST")
 else:
@@ -47,19 +47,23 @@ else:
     ]
 
     CORS_ALLOW_METHODS = ("GET", "POST")
-    CORS_ALLOW_HEADERS = [
-        *default_headers,
-    ]
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+]
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_AGE = 60 * 1
+CSRF_COOKIE_AGE = 60 * 1 * 10  # 10 minutes
 CSRF_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 
 CORS_ALLOW_CREDENTIALS = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 API_PATH = os.getenv("API_PATH", "").strip().strip("\\")
 DJANGO_ADMIN_ENABLED = int(os.environ.get("DJANGO_ADMIN_ENABLED"))
@@ -158,6 +162,7 @@ DATABASES = {
             "connect_timeout": 5,
         },
     },
+}
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
@@ -166,6 +171,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 5,
     "MAX_PAGE_SIZE": 20,
+}
 
 if not DEBUG:
     REST_FRAMEWORK.update({
@@ -173,6 +179,7 @@ if not DEBUG:
         "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     })
 
+APPEND_SLASH = False
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -262,9 +269,11 @@ WAGTAILSEARCH_BACKENDS = {
 
 WAGTAIL_HEADLESS_PREVIEW = {
     "CLIENT_URLS": {
-        "default": BASE_URL + "/preview/",
+        "default": BASE_URL + "/preview",
     },
-    "SERVE_BASE_URL": BASE_URL + "/preview/",
+    "SERVE_BASE_URL": BASE_URL + "/preview",
     "REDIRECT_ON_PREVIEW": True,
-    "ENFORCE_TRAILING_SLASH": True,
+    "ENFORCE_TRAILING_SLASH": False,
 }
+# Geoserver settings
+GEOSERVER_URL = os.environ.get("GEOSERVER_URL")
