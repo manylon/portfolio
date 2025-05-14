@@ -1,9 +1,6 @@
 {
   "files.eol": "\n",
   "editor.tabSize": 2,
-  "remote.extensionKind": {
-    "ms-azuretools.vscode-docker": "workspace"
-  },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
@@ -23,12 +20,16 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
   "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "editor.formatOnType": false, // required
   "editor.formatOnSave": true,
