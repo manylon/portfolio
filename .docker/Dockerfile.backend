@@ -53,3 +53,23 @@ EXPOSE 5678
 # Run the entrypoint script
 ENTRYPOINT ["/tmp/entrypoint.sh"]
 
+##########################
+#      PRODUCTION        #
+##########################
+FROM base AS production
+
+COPY ../backend/requirements.txt /srv/app
+
+RUN pip install -r requirements.txt
+
+# create the app user
+RUN addgroup --system app && adduser --system --group app
+
+# give accsess to the app user to the /srv/app directory
+RUN chown -R app:app /srv/app
+
+# change to the app user
+USER app
+
+# Run the entrypoint script
+ENTRYPOINT ["/tmp/entrypoint.sh"]
